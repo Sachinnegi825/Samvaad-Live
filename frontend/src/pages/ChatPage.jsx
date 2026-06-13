@@ -11,11 +11,9 @@ function ChatPage() {
   const { token, logout } = useAuthStore();
   const { updateUserStatus } = useChatStore();
 
-  // Pass the JWT token so socket connects with auth
   const socket = useSocket(token);
 
   useEffect(() => {
-    // Handle rejected socket connection (invalid/expired token)
     const onConnectError = (err) => {
       if (err.message.includes('Authentication')) {
         logout();
@@ -23,7 +21,6 @@ function ChatPage() {
       }
     };
 
-    // Handle global online/offline status updates
     const onStatusChange = ({ userId, isOnline, lastSeen }) => {
       updateUserStatus(userId, isOnline, lastSeen);
     };
@@ -38,14 +35,11 @@ function ChatPage() {
   }, [socket, logout, navigate, updateUserStatus]);
 
   return (
-    <div className="min-h-screen flex antialiased overflow-hidden" style={{ height: '100dvh' }}>
-      {/* Sidebar */}
-      <div className="w-72 flex-shrink-0 glass-card-dark border-r border-white/5 flex flex-col overflow-hidden">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 gap-6 comic-halftone font-[var(--font-comic)]">
+      <div className="w-80 h-[85vh] bg-white comic-border flex flex-col overflow-hidden transform -rotate-1">
         <Sidebar socket={socket} />
       </div>
-
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 h-[85vh] max-w-5xl bg-white comic-border flex flex-col overflow-hidden transform rotate-1">
         <MessageArea socket={socket} />
       </div>
     </div>

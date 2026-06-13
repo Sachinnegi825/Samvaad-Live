@@ -1,13 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiSearch, FiPlus, FiX, FiMessageCircle, FiLogOut, FiLoader } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiX, FiLogOut, FiLoader } from 'react-icons/fi';
 import useAuthStore from '../store/useAuthStore';
 import useChatStore from '../store/useChatStore';
 import { searchUsers } from '../services/conversation.service';
 
-/**
- * Sidebar Component
- * Shows the list of conversations + a user search to start new chats.
- */
 function Sidebar({ socket, onSelectConversation }) {
   const { user, logout } = useAuthStore();
   const {
@@ -29,7 +25,6 @@ function Sidebar({ socket, onSelectConversation }) {
     loadConversations();
   }, [loadConversations]);
 
-  // Debounced search — wait 400ms after user stops typing before calling API
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.length < 2) {
       setSearchResults([]);
@@ -61,137 +56,99 @@ function Sidebar({ socket, onSelectConversation }) {
 
   const handleSelectConversation = async (conv) => {
     await selectConversation(conv);
-    // Tell the server we are joining this conversation's room
     socket.emit('join-conversation', conv._id);
-    // Tell the server to mark messages as read
     socket.emit('message-read', { conversationId: conv._id });
     if (onSelectConversation) onSelectConversation(conv);
   };
 
-  // Helper: get the "other" participant's name for private chats
   const getConversationDisplay = (conv) => {
     if (conv.isGroup) return { name: conv.name, avatar: null };
     const other = conv.participants.find((p) => p._id !== user?.id);
     return { name: other?.username || 'Unknown', avatar: other?.avatar, isOnline: other?.isOnline, other };
   };
 
-  const formatTime = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="px-5 pt-5 pb-4 border-b border-white/5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-violet-600 to-blue-500 flex items-center justify-center">
-              <FiMessageCircle className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-extrabold text-white tracking-tight">Samvaad Live</span>
-          </div>
-          <button
-            onClick={() => setShowSearch((v) => !v)}
-            className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
-            title="New conversation"
-          >
-            {showSearch ? <FiX className="h-4 w-4" /> : <FiPlus className="h-4 w-4" />}
-          </button>
-        </div>
+      <div className="px-4 py-4 border-b-4 border-black bg-primary text-white flex justify-between items-center">
+        <h1 className="text-xl font-bold uppercase tracking-wider" style={{ textShadow: '2px 2px 0 #000' }}>Chats!</h1>
+        <button 
+          onClick={() => setShowSearch(!showSearch)}
+          className="comic-border bg-yellow-400 text-black w-10 h-10 flex items-center justify-center rounded-full hover:bg-yellow-300 transition-transform active:translate-y-1 active:shadow-[4px_4px_0_black] cursor-pointer"
+        >
+          {showSearch ? <FiX className="h-6 w-6 stroke-[3px]" /> : <FiPlus className="h-6 w-6 stroke-[3px]" />}
+        </button>
+      </div>
 
-        {/* Search for users to start a new chat */}
-        {showSearch && (
+      {/* Search Bar */}
+      {showSearch && (
+        <div className="relative p-4 border-b-4 border-black bg-secondary">
           <div className="relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-3.5 w-3.5 pointer-events-none" />
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-black" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search users..."
+              placeholder="Search..."
               autoFocus
-              className="w-full bg-slate-950/60 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-violet-500/50 transition-all"
+              className="w-full pl-9 pr-4 py-2 focus:outline-none transition-all comic-border bg-white text-black font-bold placeholder-black/50"
             />
-            {/* Search Results Dropdown */}
-            {(searchResults.length > 0 || isSearching) && (
-              <div className="absolute top-full left-0 right-0 mt-1 glass-card rounded-xl overflow-hidden z-50 border border-white/10 shadow-xl">
-                {isSearching ? (
-                  <div className="p-3 text-center">
-                    <FiLoader className="h-4 w-4 animate-spin text-slate-400 mx-auto" />
-                  </div>
-                ) : (
-                  searchResults.map((u) => (
-                    <button
-                      key={u._id}
-                      onClick={() => handleStartConversation(u._id)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-all cursor-pointer"
-                    >
-                      <div className="relative">
-                        <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-violet-700 to-blue-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                          {u.username[0].toUpperCase()}
-                        </div>
-                        {u.isOnline && (
-                          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-slate-900" />
-                        )}
-                      </div>
-                      <span className="text-sm text-slate-200 font-medium">{u.username}</span>
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
           </div>
-        )}
-      </div>
+          {(searchResults.length > 0 || isSearching) && (
+            <div className="absolute left-0 right-0 z-50 overflow-hidden comic-border bg-white mt-2 top-full">
+              {isSearching ? (
+                <div className="p-4 text-center"><FiLoader className="animate-spin mx-auto" /></div>
+              ) : (
+                searchResults.map(u => (
+                  <button
+                    key={u._id}
+                    onClick={() => handleStartConversation(u._id)}
+                    className="w-full text-left flex items-center gap-3 px-4 py-3 border-b-4 border-black hover:bg-yellow-200 font-bold uppercase cursor-pointer"
+                  >
+                    <span>{u.username}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
         {isLoadingConversations ? (
-          <div className="flex items-center justify-center h-32">
-            <FiLoader className="h-5 w-5 animate-spin text-slate-500" />
-          </div>
+          <div className="p-4 text-center font-bold">Loading...</div>
         ) : conversations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-slate-500 text-center px-4">
-            <FiMessageCircle className="h-8 w-8 mb-2 text-slate-600" />
-            <p className="text-sm font-medium">No conversations yet</p>
-            <p className="text-xs mt-1">Click + to start chatting</p>
-          </div>
+          <div className="p-4 text-center font-bold opacity-50">No conversations</div>
         ) : (
-          <ul className="py-2">
+          <ul>
             {conversations.map((conv) => {
               const { name, isOnline } = getConversationDisplay(conv);
               const isActive = activeConversation?._id === conv._id;
+              
               return (
                 <li key={conv._id}>
                   <button
                     onClick={() => handleSelectConversation(conv)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 transition-all cursor-pointer ${
-                      isActive ? 'bg-violet-600/15 border-r-2 border-violet-500' : 'hover:bg-white/5'
-                    }`}
+                    className={`w-full flex items-center gap-3 text-left transition-all p-4 border-b-4 border-black cursor-pointer ${isActive ? 'bg-yellow-300' : 'bg-white hover:bg-gray-100'}`}
                   >
                     {/* Avatar */}
-                    <div className="relative flex-shrink-0">
-                      <div className={`h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-700 to-blue-600 flex items-center justify-center text-sm font-bold text-white`}>
-                        {name?.[0]?.toUpperCase()}
-                      </div>
+                    <div className="relative flex items-center justify-center font-bold flex-shrink-0 w-12 h-12 rounded-full border-4 border-black bg-primary text-white text-xl">
+                      {name?.[0]?.toUpperCase()}
                       {isOnline && (
-                        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-400 border-2 border-slate-900" />
+                        <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-black rounded-full" />
                       )}
                     </div>
-
-                    {/* Conversation info */}
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-slate-200 truncate">{name}</span>
-                        {conv.lastMessage?.createdAt && (
-                          <span className="text-[10px] text-slate-500 flex-shrink-0 ml-1">
-                            {formatTime(conv.lastMessage.createdAt)}
-                          </span>
-                        )}
+                    
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold truncate uppercase text-lg">
+                          {name}
+                        </span>
                       </div>
                       {conv.lastMessage?.text && (
-                        <p className="text-xs text-slate-400 truncate mt-0.5">
+                        <p className="truncate text-sm font-bold opacity-70">
                           {conv.lastMessage.text}
                         </p>
                       )}
@@ -204,23 +161,23 @@ function Sidebar({ socket, onSelectConversation }) {
         )}
       </div>
 
-      {/* Current user info + logout */}
-      <div className="px-4 py-3 border-t border-white/5">
+      {/* User Info & Logout */}
+      <div className="border-t-4 border-black bg-secondary p-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+          <div className="flex items-center justify-center font-bold w-10 h-10 rounded-full border-4 border-black bg-white text-black">
             {user?.username?.[0]?.toUpperCase()}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-200 truncate">{user?.username}</p>
-          </div>
-          <button
-            onClick={logout}
-            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer"
-            title="Sign out"
-          >
-            <FiLogOut className="h-4 w-4" />
-          </button>
+          <span className="font-bold uppercase text-white">
+            {user?.username}
+          </span>
         </div>
+        <button
+          onClick={logout}
+          className="comic-border bg-white p-2 rounded-full hover:bg-gray-200 active:translate-y-1 cursor-pointer"
+          title="Logout"
+        >
+          <FiLogOut className="stroke-[3px]" />
+        </button>
       </div>
     </div>
   );
