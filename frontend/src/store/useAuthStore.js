@@ -15,7 +15,7 @@ import api from '../services/api';
  */
 const useAuthStore = create((set) => ({
   user: null,
-  token: localStorage.getItem('chatwave_token') || null,
+  token: localStorage.getItem('samvaad_token') || null,
   isLoading: false,
   error: null,
 
@@ -28,7 +28,7 @@ const useAuthStore = create((set) => ({
       const { data } = await api.post('/auth/register', { username, email, password });
 
       // Save token to localStorage so it persists across browser refreshes
-      localStorage.setItem('chatwave_token', data.token);
+      localStorage.setItem('samvaad_token', data.token);
 
       set({ user: data.user, token: data.token, isLoading: false });
       return { success: true };
@@ -47,7 +47,7 @@ const useAuthStore = create((set) => ({
     try {
       const { data } = await api.post('/auth/login', { email, password });
 
-      localStorage.setItem('chatwave_token', data.token);
+      localStorage.setItem('samvaad_token', data.token);
 
       set({ user: data.user, token: data.token, isLoading: false });
       return { success: true };
@@ -71,7 +71,7 @@ const useAuthStore = create((set) => ({
   // Verifies if the stored token is still valid and loads the user
   // -----------------------------------------------------------------------
   checkAuth: async () => {
-    const token = localStorage.getItem('chatwave_token');
+    const token = localStorage.getItem('samvaad_token');
     if (!token) return set({ user: null, token: null });
 
     set({ isLoading: true });
@@ -80,7 +80,7 @@ const useAuthStore = create((set) => ({
       set({ user: data.user, token, isLoading: false });
     } catch {
       // Token is expired or invalid
-      localStorage.removeItem('chatwave_token');
+      localStorage.removeItem('samvaad_token');
       set({ user: null, token: null, isLoading: false });
     }
   },

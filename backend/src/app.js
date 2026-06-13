@@ -19,7 +19,7 @@ app.use('/api/conversations', conversationRoutes);
 app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Chatwave API is running 🚀' });
+  res.json({ message: 'Samvaad Live API is running 🚀' });
 });
 
 export default app;

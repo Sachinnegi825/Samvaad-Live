@@ -90,7 +90,7 @@ function Sidebar({ socket, onSelectConversation }) {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-violet-600 to-blue-500 flex items-center justify-center">
               <FiMessageCircle className="h-4 w-4 text-white" />
             </div>
-            <span className="font-extrabold text-white tracking-tight">Chatwave</span>
+            <span className="font-extrabold text-white tracking-tight">Samvaad Live</span>
           </div>
           <button
             onClick={() => setShowSearch((v) => !v)}

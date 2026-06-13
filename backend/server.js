@@ -19,5 +19,5 @@ initSocket(server);
 
 // 4. Start listening
 server.listen(PORT, () => {
-  console.log(`[Server] Chatwave running on port ${PORT}`);
+  console.log(`[Server] Samvaad Live running on port ${PORT}`);
 });

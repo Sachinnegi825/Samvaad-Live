@@ -20,7 +20,7 @@ const api = axios.create({
 // Request Interceptor — runs before every request is sent
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('chatwave_token');
+    const token = localStorage.getItem('samvaad_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

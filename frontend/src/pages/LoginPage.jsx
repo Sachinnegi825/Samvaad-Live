@@ -55,7 +55,7 @@ function LoginPage() {
           <div className="h-16 w-16 rounded-2xl bg-gradient-to-tr from-violet-600 to-blue-500 flex items-center justify-center shadow-2xl shadow-violet-500/30 mb-4">
             <FiMessageCircle className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Chatwave</h1>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Samvaad Live</h1>
           <p className="text-slate-400 text-sm mt-1">
             {isLoginMode ? 'Welcome back! Sign in to continue.' : 'Create your account and join the wave.'}
           </p>
@@ -160,7 +160,7 @@ function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-slate-500 mt-6">
-          By using Chatwave, you agree to learn something new today 🚀
+          By using Samvaad Live, you agree to learn something new today 🚀
         </p>
       </div>
     </div>
