@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", "Inter", system-ui, sans-serif;
+  --font-mono: "Fira Code", monospace;
+
+  /* Custom Glow/Glass Colors */
+  --color-brand-purple: #8b5cf6;
+  --color-brand-emerald: #10b981;
+  --color-brand-blue: #3b82f6;
+  --color-dark-bg: #0b0f19;
+  --color-glass: rgba(15, 23, 42, 0.65);
+  --color-glass-dark: rgba(7, 10, 19, 0.8);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --color-glass-border-active: rgba(139, 92, 246, 0.3);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-dark-bg);
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15), transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.12), transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05), transparent 50%);
+    background-attachment: fixed;
+    color: #f8fafc;
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Custom scrollbar for modern feel */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.3);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.5);
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background: var(--color-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--color-glass-border);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+  .glass-card-dark {
+    background: var(--color-glass-dark);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--color-glass-border);
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+  }
+  .neon-glow-purple {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.25);
+  }
+  .neon-glow-emerald {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+  }
+}
