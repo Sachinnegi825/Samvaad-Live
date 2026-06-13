@@ -64,6 +64,8 @@ export const login = async (req, res) => {
 
     // 1. Find user by email — .select('+password') overrides the select:false on the schema
     const user = await User.findOne({ email }).select('+password');
+
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }

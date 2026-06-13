@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiSearch, FiPlus, FiX, FiLogOut, FiLoader } from 'react-icons/fi';
+import { FiSearch, FiEdit, FiX, FiLogOut, FiLoader } from 'react-icons/fi';
 import useAuthStore from '../store/useAuthStore';
 import useChatStore from '../store/useChatStore';
 import { searchUsers } from '../services/conversation.service';
@@ -63,7 +63,8 @@ function Sidebar({ socket, onSelectConversation }) {
 
   const getConversationDisplay = (conv) => {
     if (conv.isGroup) return { name: conv.name, avatar: null };
-    const other = conv.participants.find((p) => p._id !== user?.id);
+    const currentUserId = user?.id || user?._id;
+    const other = conv.participants.find((p) => p._id !== currentUserId);
     return { name: other?.username || 'Unknown', avatar: other?.avatar, isOnline: other?.isOnline, other };
   };
 
@@ -76,7 +77,7 @@ function Sidebar({ socket, onSelectConversation }) {
           onClick={() => setShowSearch(!showSearch)}
           className="comic-border bg-yellow-400 text-black w-10 h-10 flex items-center justify-center rounded-full hover:bg-yellow-300 transition-transform active:translate-y-1 active:shadow-[4px_4px_0_black] cursor-pointer"
         >
-          {showSearch ? <FiX className="h-6 w-6 stroke-[3px]" /> : <FiPlus className="h-6 w-6 stroke-[3px]" />}
+          {showSearch ? <FiX className="h-5 w-5 stroke-[3px]" /> : <FiEdit className="h-5 w-5 stroke-[2.5px] ml-1 mb-1" />}
         </button>
       </div>
 
@@ -115,7 +116,7 @@ function Sidebar({ socket, onSelectConversation }) {
       )}
 
       {/* Conversation List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
         {isLoadingConversations ? (
           <div className="p-4 text-center font-bold">Loading...</div>
         ) : conversations.length === 0 ? (
@@ -146,6 +147,11 @@ function Sidebar({ socket, onSelectConversation }) {
                         <span className="font-bold truncate uppercase text-lg">
                           {name}
                         </span>
+                        {conv.unreadCount > 0 && (
+                          <div className="bg-red-500 text-white font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-black text-xs flex-shrink-0 ml-2">
+                            {conv.unreadCount}
+                          </div>
+                        )}
                       </div>
                       {conv.lastMessage?.text && (
                         <p className="truncate text-sm font-bold opacity-70">

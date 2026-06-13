@@ -6,13 +6,19 @@ import Conversation from '../models/Conversation.js';
 
 let io;
 
+// Track how many active socket connections each user has
+// { "userId": ["socketId1", "socketId2"] }
+const userSocketMap = {};
+
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: 'http://localhost:5173',
       methods: ['GET', 'POST'],
       credentials: true,
-    }
+    },
+    pingTimeout: 10000, // 10 seconds without pong -> disconnect
+    pingInterval: 5000, // Ping every 5 seconds
   });
 
   // JWT verification middleware — runs before every connection
@@ -22,14 +28,22 @@ export const initSocket = (server) => {
     const user = socket.user;
     console.log(`[Socket] ${user.username} connected (${socket.id})`);
 
-    // Mark user as online in DB
-    await User.findByIdAndUpdate(user._id, { isOnline: true });
+    const userIdStr = user._id.toString();
 
-    // Tell other users this person is online
-    socket.broadcast.emit('user-status-change', {
-      userId: user._id,
-      isOnline: true,
-    });
+    // 1. Add this socket to the user's active connections list
+    if (!userSocketMap[userIdStr]) {
+      userSocketMap[userIdStr] = [];
+    }
+    userSocketMap[userIdStr].push(socket.id);
+
+    // 2. ONLY broadcast and update DB if this is their FIRST connection
+    if (userSocketMap[userIdStr].length === 1) {
+      await User.findByIdAndUpdate(user._id, { isOnline: true });
+      socket.broadcast.emit('user-status-change', {
+        userId: userIdStr,
+        isOnline: true,
+      });
+    }
 
     // =========================================================
     // EVENT: join-conversation
@@ -183,18 +197,30 @@ export const initSocket = (server) => {
     // =========================================================
     socket.on('disconnect', async () => {
       console.log(`[Socket] ${user.username} disconnected`);
+      const userIdStr = user._id.toString();
 
-      await User.findByIdAndUpdate(user._id, {
-        isOnline: false,
-        lastSeen: new Date(),
-      });
+      // 1. Remove this specific socket from the user's active connections
+      if (userSocketMap[userIdStr]) {
+        userSocketMap[userIdStr] = userSocketMap[userIdStr].filter((id) => id !== socket.id);
 
-      // Notify all clients this user went offline
-      io.emit('user-status-change', {
-        userId: user._id,
-        isOnline: false,
-        lastSeen: new Date(),
-      });
+        // 2. If they have NO MORE active connections, mark them offline
+        if (userSocketMap[userIdStr].length === 0) {
+          await User.findByIdAndUpdate(user._id, {
+            isOnline: false,
+            lastSeen: new Date(),
+          });
+
+          // Notify all clients this user went offline
+          io.emit('user-status-change', {
+            userId: userIdStr,
+            isOnline: false,
+            lastSeen: new Date(),
+          });
+
+          // Clean up the map to prevent memory leaks
+          delete userSocketMap[userIdStr];
+        }
+      }
     });
   });
 

@@ -15,7 +15,18 @@ export const getConversations = async (req, res) => {
       .populate('lastMessage.sender', 'username')
       .sort({ updatedAt: -1 }); // most recently updated first
 
-    res.status(200).json({ conversations });
+    const convsWithUnread = await Promise.all(
+      conversations.map(async (conv) => {
+        const unreadCount = await Message.countDocuments({
+          conversationId: conv._id,
+          status: { $ne: 'read' },
+          sender: { $ne: req.user._id }
+        });
+        return { ...conv.toObject(), unreadCount };
+      })
+    );
+
+    res.status(200).json({ conversations: convsWithUnread });
   } catch (error) {
     console.error('[Conversation] getConversations error:', error.message);
     res.status(500).json({ message: 'Server error fetching conversations' });
@@ -55,9 +66,19 @@ export const getOrCreateConversation = async (req, res) => {
 
       // Populate after creation
       conversation = await conversation.populate('participants', 'username avatar isOnline lastSeen');
+      
+      // Send response immediately with unreadCount 0
+      return res.status(200).json({ conversation: { ...conversation.toObject(), unreadCount: 0 } });
     }
 
-    res.status(200).json({ conversation });
+    // If it does exist, calculate unread count before returning
+    const unreadCount = await Message.countDocuments({
+      conversationId: conversation._id,
+      status: { $ne: 'read' },
+      sender: { $ne: myId }
+    });
+
+    res.status(200).json({ conversation: { ...conversation.toObject(), unreadCount } });
   } catch (error) {
     console.error('[Conversation] getOrCreate error:', error.message);
     res.status(500).json({ message: 'Server error' });

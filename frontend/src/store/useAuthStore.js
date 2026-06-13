@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '../services/api';
+import useChatStore from './useChatStore';
 
 /**
  * useAuthStore — Zustand Global State
@@ -62,7 +63,8 @@ const useAuthStore = create((set) => ({
   // LOGOUT
   // -----------------------------------------------------------------------
   logout: () => {
-    localStorage.removeItem('chatwave_token');
+    localStorage.removeItem('samvaad_token');
+    useChatStore.getState().reset();
     set({ user: null, token: null });
   },
 

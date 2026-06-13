@@ -40,7 +40,16 @@ const useChatStore = create((set, get) => ({
   // Select a conversation and load its messages
   // -------------------------------------------------------------------
   selectConversation: async (conversation) => {
-    set({ activeConversation: conversation, isLoadingMessages: true, messages: [] });
+    set({ activeConversation: conversation, isLoadingMessages: !!conversation, messages: [] });
+    if (!conversation) return;
+
+    // Reset unread count for the selected conversation
+    set((state) => ({
+      conversations: state.conversations.map(c => 
+        c._id === conversation._id ? { ...c, unreadCount: 0 } : c
+      )
+    }));
+
     try {
       const { data } = await fetchMessages(conversation._id);
       set({ messages: data.messages, isLoadingMessages: false });
@@ -91,10 +100,32 @@ const useChatStore = create((set, get) => ({
   // we're NOT currently viewing
   // -------------------------------------------------------------------
   updateConversationPreview: (conversationId, lastMessage) => {
+    const { conversations, loadConversations } = get();
+    const exists = conversations.some(c => c._id === conversationId);
+
+    if (!exists) {
+      // If we receive a message for a completely new chat, fetch the full list 
+      // so we get the populated participant data
+      loadConversations();
+      return;
+    }
+
     set((state) => ({
       conversations: state.conversations.map((c) =>
-        c._id === conversationId ? { ...c, lastMessage } : c
+        c._id === conversationId 
+          ? { ...c, lastMessage, unreadCount: (c.unreadCount || 0) + 1 } 
+          : c
       ),
+    }));
+  },
+
+  // -------------------------------------------------------------------
+  // Mark messages as read locally
+  // -------------------------------------------------------------------
+  markMessagesAsRead: (conversationId) => {
+    set((state) => ({
+      messages: state.messages.map(m => m.conversationId === conversationId ? { ...m, status: 'read' } : m),
+      conversations: state.conversations.map(c => c._id === conversationId ? { ...c, unreadCount: 0 } : c)
     }));
   },
 
@@ -119,14 +150,43 @@ const useChatStore = create((set, get) => ({
   // Update online status of a user across all conversations
   // -------------------------------------------------------------------
   updateUserStatus: (userId, isOnline, lastSeen) => {
-    set((state) => ({
-      conversations: state.conversations.map((conv) => ({
+    set((state) => {
+      const updatedConversations = state.conversations.map((conv) => ({
         ...conv,
         participants: conv.participants.map((p) =>
           p._id === userId ? { ...p, isOnline, lastSeen } : p
         ),
-      })),
-    }));
+      }));
+
+      let updatedActive = state.activeConversation;
+      if (updatedActive) {
+        updatedActive = {
+          ...updatedActive,
+          participants: updatedActive.participants.map((p) =>
+            p._id === userId ? { ...p, isOnline, lastSeen } : p
+          ),
+        };
+      }
+
+      return {
+        conversations: updatedConversations,
+        activeConversation: updatedActive,
+      };
+    });
+  },
+
+  // -------------------------------------------------------------------
+  // Reset store on logout
+  // -------------------------------------------------------------------
+  reset: () => {
+    set({
+      conversations: [],
+      activeConversation: null,
+      messages: [],
+      typingUsers: {},
+      isLoadingConversations: false,
+      isLoadingMessages: false,
+    });
   },
 }));
 
